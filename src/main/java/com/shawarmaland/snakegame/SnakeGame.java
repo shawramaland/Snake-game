@@ -12,6 +12,10 @@ public class SnakeGame extends JPanel {
     private final int cellSize = 30;
     private final int gridWidth = 20;
     private final int gridHeight = 20;
+
+    private int currentLevel = 1;
+    private int pointsToNextLeve = 100;
+
     private int score = 0;
     private int timerDelay = 100;
     private Timer timer;
@@ -23,7 +27,6 @@ public class SnakeGame extends JPanel {
         // Initialize the snake with one cell on the center
         snake.add(new Cell(gridWidth / 2 , gridHeight / 2));
         spawnFood();
-        startGame();
 
         // Adds a key listener
         this.addKeyListener(new KeyAdapter() {
@@ -46,6 +49,10 @@ public class SnakeGame extends JPanel {
             }
         });
         this.setFocusable(true);
+    }
+
+    public void initializeGame() {
+        startGame();
     }
 
     private void spawnFood() {
@@ -118,9 +125,29 @@ public class SnakeGame extends JPanel {
         }
 
         // Increase speed based on score
-        if(score != 0 && score % 50 == 0) {// every 50 points
-            timerDelay = Math.max(timerDelay - 10, 50);
-            timer.setDelay(timerDelay);
+        // if(score != 0 && score % 50 == 0) {// every 50 points
+        //    timerDelay = Math.max(timerDelay - 10, 50);
+        //    timer.setDelay(timerDelay);
+        //}
+        if(score >= pointsToNextLeve * currentLevel) {
+            currentLevel++;
+            switch(currentLevel) {
+                case 2:
+                    timerDelay = 90;
+                    break;
+                case 3:
+                    timerDelay = 80;
+                    break;
+                case 4:
+                    timerDelay = 70;
+                    break;
+                case 5:
+                    timerDelay = 60;
+                    break;
+                case 6:
+                    timerDelay = 50;
+                    break;
+            }
         }
 
         // checking if the snake has eaten the food
