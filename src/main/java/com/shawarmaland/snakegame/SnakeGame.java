@@ -7,6 +7,7 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.List;
 
 public class SnakeGame extends JPanel {
     private final int cellSize = 30;
@@ -19,9 +20,10 @@ public class SnakeGame extends JPanel {
     private int score = 0;
     private int timerDelay = 100;
     private Timer timer;
-    private final LinkedList<Cell> snake = new LinkedList<>();
     private Cell food;
     private String direction = "RIGHT";
+
+    private final LinkedList<Cell> snake = new LinkedList<>();
 
     public SnakeGame() {
         // Initialize the snake with one cell on the center
@@ -82,6 +84,7 @@ public class SnakeGame extends JPanel {
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 14));
         g.drawString("Score: " + score, 10, 15);
+        g.drawString("Level: " + currentLevel, 200, 15);
     }
 
     private void moveSnake() {
@@ -106,15 +109,15 @@ public class SnakeGame extends JPanel {
         // Check for collisions with itself
         for(int i = 0; i < snake.size() - 1; i++) {
             if(snake.get(i).equals(newHead)) {
-                System.out.println("Game Over: You ran into yourself!");
-                System.exit(0);
+                gameOver("Game Over: You ran into yourself!");
+                return;
             }
         }
 
         // Checking for collisions with the wall
         if(newHead.getX() < 0 || newHead.getX() >= gridWidth || newHead.getY() < 0 || newHead.getY() >= gridHeight) {
-            System.out.println("Game Over: You hit the wall!");
-            System.exit(0);
+            gameOver("Game Over: You hit the wall!");
+            return;
         }
 
         // Displays the Score
@@ -148,6 +151,7 @@ public class SnakeGame extends JPanel {
                     timerDelay = 50;
                     break;
             }
+            timer.setDelay(timerDelay);
         }
 
         // checking if the snake has eaten the food
@@ -160,6 +164,22 @@ public class SnakeGame extends JPanel {
         }
 
         // TODO: Handle collision and eating food
+    }
+
+    private void gameOver(String reason) {
+        timer.stop();
+        HighScoreManager hsm = new HighScoreManager();
+
+        // Save the score
+        hsm.saveScore("PlayerName", score);
+
+        List<HighScoreManager.Score> topScores = hsm.getTopScores(5);
+        // TODO: display the scores or provide UI feedback
+        System.out.println("Game Over!" + reason);
+        System.out.println("Top score is: ");
+        for(HighScoreManager.Score score : topScores) {
+            System.out.println(score.getPlayerName() + " : " + score.getScoreValue());
+        }
     }
 
     public void startGame() {
