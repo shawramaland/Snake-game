@@ -25,11 +25,15 @@ public class SnakeGame extends JPanel {
 
     private final LinkedList<Cell> snake = new LinkedList<>();
 
+    private final LinkedList<Wall> walls = new LinkedList<>();
+
     public SnakeGame() {
         // Initialize the snake with one cell on the center
         snake.add(new Cell(gridWidth / 2 , gridHeight / 2));
+        // Spawning food
         spawnFood();
-
+        // generating Walls
+        generateWalls();
         // Adds a key listener
         this.addKeyListener(new KeyAdapter() {
             @Override
@@ -67,6 +71,21 @@ public class SnakeGame extends JPanel {
         food = new Cell(x, y);
     }
 
+    private void generateWalls() {
+        Random random = new Random();
+
+        int wallCount = 8;
+        for(int i = 0; i < wallCount; i++) {
+            int x, y;
+            do {
+                x = random.nextInt(gridWidth);
+                y = random.nextInt(gridHeight);
+            } while (snake.contains(new Cell(x, y)) || walls.contains(new Wall(x, y)) || food.equals(new Cell(x, y)));
+
+            walls.add(new Wall(x, y));
+        }
+    }
+
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -80,6 +99,12 @@ public class SnakeGame extends JPanel {
         // Draws the food
         g.setColor(Color.RED);
         g.fillRect(food.getX() * cellSize, food.getY() * cellSize, cellSize, cellSize);
+
+        // Draws the Walls
+        g.setColor(Color.GRAY);
+        for(Wall wall : walls) {
+            g.fillRect(wall.getX() * cellSize, wall.getY() * cellSize, cellSize, cellSize);
+        }
 
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 14));
@@ -114,11 +139,26 @@ public class SnakeGame extends JPanel {
             }
         }
 
-        // Checking for collisions with the wall
-        if(newHead.getX() < 0 || newHead.getX() >= gridWidth || newHead.getY() < 0 || newHead.getY() >= gridHeight) {
-            gameOver("Game Over: You hit the wall!");
-            return;
+        // Check for collisions with walls
+        for(Wall wall : walls) {
+            if(newHead.equals(new Cell(wall.getX(), wall.getY()))) {
+                gameOver("Gave over: You hit a wall segment!");
+                return;
+            }
         }
+
+        // Portal through walls
+        if (newHead.getX() < 0) {
+            newHead.setX(gridWidth - 1);
+        }
+        if (newHead.getX() >= gridWidth) {
+            newHead.setX(0);
+        }
+        if (newHead.getY() < 0) {
+            newHead.setY(gridHeight - 1);
+        }
+        if (newHead.getY() >= gridHeight)
+            newHead.setY(0);
 
         // Displays the Score
         if(newHead.equals(food)) {
@@ -166,6 +206,18 @@ public class SnakeGame extends JPanel {
         // TODO: Handle collision and eating food
     }
 
+    private void resetGame() {
+        snake.clear();
+        snake.add(new Cell(gridWidth / 2, gridHeight / 2));
+        direction = "RIGHT";
+        score = 0;
+        currentLevel = 1;
+        timerDelay = 100;
+        spawnFood();
+        walls.clear();
+        generateWalls();
+    }
+
     private void gameOver(String reason) {
         timer.stop();
         HighScoreManager hsm = new HighScoreManager();
@@ -179,6 +231,17 @@ public class SnakeGame extends JPanel {
         System.out.println("Top score is: ");
         for(HighScoreManager.Score score : topScores) {
             System.out.println(score.getPlayerName() + " : " + score.getScoreValue());
+        }
+        int choice = JOptionPane.showConfirmDialog(
+                this,
+                "Do you want to restart the game?",
+                "Game Over",
+                JOptionPane.YES_NO_OPTION
+        );
+
+        if(choice == JOptionPane.YES_OPTION) {
+            resetGame();
+            startGame();
         }
     }
 
