@@ -15,7 +15,9 @@ public class SnakeGame extends JPanel {
     private final int gridHeight = 20;
 
     private int currentLevel = 1;
-    private int pointsToNextLeve = 100;
+    private final int pointsToNextLevel = 100;
+
+    private final Random random = new Random();
 
     private int score = 0;
     private int timerDelay = 100;
@@ -62,25 +64,42 @@ public class SnakeGame extends JPanel {
     }
 
     private void spawnFood() {
-        Random random = new Random();
         int x, y;
         do {
             x = random.nextInt(gridWidth);
             y = random.nextInt(gridHeight);
-        } while (snake.contains(new Cell(x, y)));
+        } while (snake.contains(new Cell(x, y)) || walls.contains(new Wall(x, y)));
         food = new Cell(x, y);
     }
 
     private void generateWalls() {
-        Random random = new Random();
+        int wallCount;
+        switch(currentLevel) {
+            case 1:
+                wallCount = 0;
+                break;
+            case 2:
+                wallCount = 2;
+                break;
+            case 3:
+                wallCount = 4;
+                break;
+            case 4:
+                wallCount = 6;
+                break;
+            case 5:
+                wallCount = 8;
+                break;
+            default:
+                wallCount = 10;
+        }
 
-        int wallCount = 8;
         for(int i = 0; i < wallCount; i++) {
             int x, y;
             do {
                 x = random.nextInt(gridWidth);
                 y = random.nextInt(gridHeight);
-            } while (snake.contains(new Cell(x, y)) || walls.contains(new Wall(x, y)) || food.equals(new Cell(x, y)));
+            } while (snake.contains(new Cell(x, y)) || walls.contains(new Wall(x, y)) || food.equals(new Cell(x,y)));
 
             walls.add(new Wall(x, y));
         }
@@ -167,12 +186,18 @@ public class SnakeGame extends JPanel {
             score += 10;
         }
 
+        if(score >= pointsToNextLevel * currentLevel) {
+            currentLevel++;
+            // Existing switch statement for timerDelay...
+            walls.clear();
+            generateWalls();
+        }
+
         // Increase speed based on score
-        // if(score != 0 && score % 50 == 0) {// every 50 points
         //    timerDelay = Math.max(timerDelay - 10, 50);
         //    timer.setDelay(timerDelay);
         //}
-        if(score >= pointsToNextLeve * currentLevel) {
+        if(score >= pointsToNextLevel * currentLevel) {
             currentLevel++;
             switch(currentLevel) {
                 case 2:
