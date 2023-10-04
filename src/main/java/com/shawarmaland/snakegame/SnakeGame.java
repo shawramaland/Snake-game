@@ -25,6 +25,11 @@ public class SnakeGame extends JPanel {
     private Cell food;
     private String direction = "RIGHT";
 
+    private boolean canShoot = false;
+    private Cell shootingPowerUp;
+
+    private Cell bulletVisual;
+
     private final LinkedList<Cell> snake = new LinkedList<>();
 
     private final LinkedList<Wall> walls = new LinkedList<>();
@@ -53,6 +58,11 @@ public class SnakeGame extends JPanel {
                     case KeyEvent.VK_RIGHT:
                         if(!direction.equals("LEFT")) direction = "RIGHT";
                         break;
+                    case KeyEvent.VK_SPACE:
+                        if(canShoot) {
+                            shoot();
+                        }
+                        break;
                 }
             }
         });
@@ -70,29 +80,63 @@ public class SnakeGame extends JPanel {
             y = random.nextInt(gridHeight);
         } while (snake.contains(new Cell(x, y)) || walls.contains(new Wall(x, y)));
         food = new Cell(x, y);
+
+        if(random.nextInt(10) == 0) {
+            do {
+                x = random.nextInt(gridWidth);
+                y = random.nextInt(gridHeight);
+            } while (snake.contains(new Cell(x, y)) || walls.contains(new Wall(x, y)) || new Cell(x, y).equals(food));
+            shootingPowerUp = new Cell(x, y);
+        }
+    }
+
+    private void shoot() {
+        int xIncrement = 0, yIncrement = 0;
+        switch(direction) {
+            case "UP":
+                yIncrement = -1;
+                break;
+            case "DOWN":
+                yIncrement = 1;
+                break;
+            case "LEFT":
+                xIncrement = -1;
+                break;
+            case "RIGHT":
+                xIncrement = 1;
+                break;
+        }
+
+        Cell head = snake.getFirst();
+        bulletVisual = new Cell(head.getX() + xIncrement, head.getY() + yIncrement);
+        System.out.println("Bullet initial position: x=" + bulletVisual.getX() + ", y=" + bulletVisual.getY());
+
+        while (true) {
+            if(walls.contains(new Wall(bulletVisual.getX(), bulletVisual.getY()))) {
+                System.out.println("Bullet hit a wall at position x= " + bulletVisual.getX() + ", y=" + bulletVisual.getY());
+                walls.remove(new Wall(bulletVisual.getX(), bulletVisual.getY()));
+                break;
+            }
+            bulletVisual.setX(bulletVisual.getX() + xIncrement);
+            bulletVisual.setY(bulletVisual.getY() + yIncrement);
+
+            // If bullet goes out of the grid, break the loop
+
+            if(bulletVisual.getX() < 0 || bulletVisual.getX() >= gridWidth || bulletVisual.getY() < 0 || bulletVisual.getY() >= gridHeight) {
+                break;
+            }
+        }
     }
 
     private void generateWalls() {
-        int wallCount;
-        switch(currentLevel) {
-            case 1:
-                wallCount = 0;
-                break;
-            case 2:
-                wallCount = 2;
-                break;
-            case 3:
-                wallCount = 4;
-                break;
-            case 4:
-                wallCount = 6;
-                break;
-            case 5:
-                wallCount = 8;
-                break;
-            default:
-                wallCount = 10;
-        }
+        int wallCount = switch (currentLevel) {
+            case 1 -> 0;
+            case 2 -> 2;
+            case 3 -> 4;
+            case 4 -> 6;
+            case 5 -> 8;
+            default -> 10;
+        };
 
         for(int i = 0; i < wallCount; i++) {
             int x, y;
@@ -112,6 +156,7 @@ public class SnakeGame extends JPanel {
         //Draws the snake
         g.setColor(Color.GREEN);
         for(Cell cell : snake) {
+            g.setColor(canShoot ? Color.CYAN : Color.GREEN);
             g.fillRect(cell.getX() * cellSize, cell.getY() * cellSize,cellSize, cellSize);
         }
 
@@ -125,10 +170,20 @@ public class SnakeGame extends JPanel {
             g.fillRect(wall.getX() * cellSize, wall.getY() * cellSize, cellSize, cellSize);
         }
 
+        if(bulletVisual != null) {
+            g.setColor(Color.YELLOW);
+            g.fillRect(bulletVisual.getX() * cellSize, bulletVisual.getY() * cellSize, cellSize, cellSize);
+        }
+
         g.setColor(Color.BLACK);
         g.setFont(new Font("Arial", Font.BOLD, 14));
         g.drawString("Score: " + score, 10, 15);
         g.drawString("Level: " + currentLevel, 200, 15);
+
+        if (shootingPowerUp != null) {
+            g.setColor(Color.BLUE);
+            g.fillRect(shootingPowerUp.getX() * cellSize, shootingPowerUp.getY() * cellSize, cellSize, cellSize);
+        }
     }
 
     private void moveSnake() {
@@ -164,6 +219,13 @@ public class SnakeGame extends JPanel {
                 gameOver("Gave over: You hit a wall segment!");
                 return;
             }
+        }
+
+        if(newHead.equals(shootingPowerUp)) {
+            canShoot = true;
+            // Set a timer for the shooting duration, e.g., 10 seconds
+            new Timer(10000, e -> canShoot = false).start();
+            shootingPowerUp = null;
         }
 
         // Portal through walls

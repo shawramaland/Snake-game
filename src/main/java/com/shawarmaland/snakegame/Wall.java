@@ -1,5 +1,7 @@
 package main.java.com.shawarmaland.snakegame;
 
+import java.util.Objects;
+
 public class Wall {
     private int x;
     private int y;
@@ -14,5 +16,18 @@ public class Wall {
     }
     public int getY() {
         return y;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) return true;
+        if(obj == null || getClass() != obj.getClass()) return false;
+        Wall wall = (Wall) obj;
+        return x == wall.x && y == wall.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
     }
 }
